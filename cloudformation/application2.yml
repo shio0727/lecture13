@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application_Layer Template
+
+Parameters:
+  Namebase:
+    Type: String
+    Default: lecture13
+
+Resources:
+  RDSSecret: # ここでRDSのパスワードとなるランダム文字列を生成
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Name: "RDSSecret"
+      Description: "RDS password for my RDS instance"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  # rds作成
+  RDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      StorageType: gp2
+      AllocatedStorage: 20
+      PubliclyAccessible: false
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      DBInstanceClass: db.t3.micro
+      Port: 3306
+      BackupRetentionPeriod: 7
+      MasterUsername: admin
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${RDSSecret}:SecretString:password}}'
+      DBInstanceIdentifier: !Sub ${Namebase}-rds
+      DBName: RDS10
+      Engine: MySQL
+      EngineVersion: 8.0.35
+      DBSubnetGroupName: !Ref RDSSubnetgroup
+      VPCSecurityGroups:
+        - !ImportValue lecture13-SecurityGroupRDS
+        
+  # サブネットグループ
+  RDSSubnetgroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: for RDS
+      DBSubnetGroupName: lecture13RDSSubnetgroup
+      SubnetIds:
+        - !ImportValue lecture13-PrivateSubnet1id
+        - !ImportValue lecture13-PrivateSubnet2id
+Outputs:
+  RDSInstanceEndpoint:
+    Description: "The connection endpoint"
+    Value: !GetAtt RDS.Endpoint.Address
+    
+  RDSSecret:
+    Description: "RDS password"
+    Value: !Sub '{{resolve:secretsmanager:${RDSSecret}:SecretString:password}}'

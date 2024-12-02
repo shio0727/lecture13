@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Security_Layer Template
+
+Parameters:
+  NameBase: 
+    Description: for security
+    Type: String
+    Default: lecture13
+
+Resources:
+  SecurityGroupEC2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupEC2
+      GroupName: SecurityGroupEC2
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref SecurityGroupALB
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2
+      VpcId: !ImportValue lecture13-VPCid
+  SecurityGroupRDS:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupRDS
+      GroupName: SecurityGroupRDS
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: SecurityGroupRDS
+      VpcId: !ImportValue lecture13-VPCid
+
+  SecurityGroupALB:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SecurityGroupALB
+      GroupName: SecurityGroupALB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: SecurityGroupALB
+      VpcId: !ImportValue lecture13-VPCid
+      
+Outputs:
+  SecurityGroupEC2:
+    Value: !Ref SecurityGroupEC2
+    Export:
+      Name: !Sub  ${NameBase}-SecurityGroupEC2
+
+  SecurityGroupRDS:
+    Value: !Ref SecurityGroupRDS
+    Export:
+      Name: !Sub  ${NameBase}-SecurityGroupRDS
+
+  SecurityGroupALB:
+    Value: !Ref SecurityGroupALB
+    Export:
+      Name: !Sub  ${NameBase}-SecurityGroupALB
+

@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application_Layer Template
+
+Parameters:
+  NameBase: 
+    Description: for application
+    Type: String
+    Default: lecture13
+    
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${NameBase}-s3bucket-ns
+      LifecycleConfiguration:
+        Rules:
+          - Id: IntelligentTierRule
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 0
+                StorageClass: INTELLIGENT_TIERING
+      IntelligentTieringConfigurations:
+        - Id: DeepArchiveConfig
+          Status: Enabled
+          Tierings:
+            - AccessTier: ARCHIVE_ACCESS
+              Days: 180
+            - AccessTier: DEEP_ARCHIVE_ACCESS
+              Days: 365
+      Tags:
+        - Key: Name
+          Value: !Sub ${NameBase}-bucket
+          
+Outputs:
+  S3BucketName:
+    Description: The name of the S3 bucket
+    Value: !Ref S3Bucket
+    Export:
+      Name: "S3BucketName"
+      
+    
