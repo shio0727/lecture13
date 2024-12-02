@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: yes
+  
+  tasks:
+    - name: Include 01-yum
+      include_role:
+        name: 01-yum
+
+    - name: Include 02-git
+      include_role:
+        name: 02-git
+        
+    - name: Include 03-ruby
+      include_role:
+        name: 03-ruby
+        
+    - name: Include 04-node
+      include_role:
+        name: 04-node
+        
+    - name: Include 05-mysql
+      include_role:
+        name: 05-mysql
+        
+    - name: Include 06-deploy
+      include_role:
+        name: 06-deploy
+  
+  vars: 
+    app_dir: /home/ec2-user/raisetech-live8-sample-app
+    ansible_user: ec2-user
+    aws_alb_host : "{{ (lookup('env','AWS_ALB_HOST')) }}"
+    aws_db_pw : "{{ (lookup('env','AWS_DB_PW')) }}"
+    aws_db_host : "{{ (lookup('env','AWS_DB_HOST')) }}"
+    aws_s3_bucket: "{{ (lookup('env','AWS_S3_BUCKET')) }}"
