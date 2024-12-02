@@ -42,10 +42,10 @@ jobs:
           template-file-path: "cloudformation/application4.yml"
       - run:
           command: |
-          aws cloudformation describe-stacks --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
-          aws cloudformation describe-stacks --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
-          aws cloudformation describe-stacks --stack-name lecture13-app4-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_S3_NAME.txt
-          aws ssm get-parameters --query Parameters[].Value --output text --name RDSSecret --with-decryption > /tmp/AWS_DB_PW.txt
+            aws cloudformation describe-stacks --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
+            aws cloudformation describe-stacks --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
+            aws cloudformation describe-stacks --stack-name lecture13-app4-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_S3_NAME.txt
+            aws ssm get-parameters --query Parameters[].Value --output text --name RDSSecret --with-decryption > /tmp/AWS_DB_PW.txt
       - persist_to_workspace:
           root: /tmp
           paths: AWS*
@@ -55,12 +55,19 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: .
+          at: /tmp
+      - run:
+          name: set-env-vars
+          command: |
+            echo "export AWS_ALB_HOST=$(cat /tmp/AWS_ALB_HOST.txt)" >> $BASH_ENV
+            echo "export AWS_DB_HOST=$(cat /tmp/AWS_DB_HOST.txt)" >> $BASH_ENV
+            echo "export AWS_DB_PW=$(cat /tmp/AWS_DB_PW.txt)" >> $BASH_ENV
+            echo "export AWS_S3_NAME=$(cat /tmp/AWS_S3_NAME.txt)" >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
             - SHA256:1L4djQiuMIWSJwXsMSIW9HJqz7IjPsQpARLqhU6H+o0
       - ansible-playbook/install:
-          version: 2.9.23
+          version: 2.10.7
       - run:
           name: Install Ansible
           command: pip install ansible
