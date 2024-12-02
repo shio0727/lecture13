@@ -43,7 +43,7 @@ http {
 
     server {
         listen       80;
-        listen       [::]:80;{{ ALB_DNS }};
+        listen       [::]:80;{{ aws_alb_host }};
         server_name  
       #  root         /usr/share/nginx/html;
         root         /home/ec2-user/raisetech-live8-sample-app;  
