@@ -40,6 +40,15 @@ jobs:
       - aws-cloudformation/deploy:
           stack-name: "lecture13-app4-stack"
           template-file-path: "cloudformation/application4.yml"
+      - run:
+          command: |
+          aws cloudformation describe-stacks --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
+          aws cloudformation describe-stacks --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
+          aws cloudformation describe-stacks --stack-name lecture13-app4-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_S3_NAME.txt
+          aws ssm get-parameters --query Parameters[].Value --output text --name RDSSecret --with-decryption > /tmp/AWS_DB_PW.txt
+      - persist_to_workspace:
+          root: /tmp
+          paths: AWS*
             
   execute-ansible:
     executor: ansible-playbook/default
@@ -69,21 +78,6 @@ jobs:
       - run:
           name: Install Ansible Galaxy Collections
           command: ansible-galaxy collection install community.mysql
-      - aws-cli/setup:
-          aws_access_key_id: AWS_ACCESS_KEY_ID
-          aws_secret_access_key: AWS_SECRET_ACCESS_KEY
-          region: AWS_DEFAULT_REGION
-      - run:
-          name: Retrieve CloudFormation outputs and save to file
-          command: |
-            aws cloudformation describe-stacks --stack-name lecture13-app2-stack --query "Stacks[0].Outputs" --region ap-northeast-1 > cfn_outputs.json
-            db_endpoint=$(jq -r '.[] | select(.OutputKey=="RDSInstanceEndpoint") | .OutputValue' cfn_outputs.json)
-            echo "DB_ENDPOINT=$db_endpoint" >> $BASH_ENV
-      - run:
-          name: Retrieve RDS password from AWS Secrets Manager
-          command: |
-            db_password=$(aws secretsmanager get-secret-value --secret-id RDSSecret --query "SecretString" --output text | jq -r .DBPassword)
-            echo "DB_PASSWORD=$db_password" >> $BASH_ENV
       - ansible-playbook/playbook:
           playbook: ansible/playbook.yml
           playbook-options: -u ec2-user -i ansible/inventory --private-key ~/.ssh/authorized_key
