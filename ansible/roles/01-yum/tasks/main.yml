@@ -8,23 +8,27 @@
   become: yes
   yum:
     name:
-      - git
       - gcc-c++
-      - patch
-      - bzip2
       - openssl-devel
       - libyaml-devel
-      - libffi-devel
+      - readline
       - readline-devel
+      - zlib
       - zlib-devel
-      - gdbm-devel
-      - ncurses-devel
-      - make
-      - curl
+      - libffi-devel
+      - libxml2 
+      - libxslt 
+      - libxml2-devel 
+      - libxslt-devel 
+      - sqlite-devel
+      - ImageMagick
       - ImageMagick-devel
-      - libcurl-devel
-      - libicu-devel
-      - libxml2-devel
-      - libxslt-devel
     state: present
     
+# Gitのインストール
+- name: Install git
+  become: true
+  yum:
+    name: git
+    state: present  # 入ってる状態にする
+    lock_timeout: 60
