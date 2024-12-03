@@ -22,7 +22,8 @@
 - name: source ~/.nvm/nvm.sh
   become: true
   copy:
-    src: roles/03_node.js/templates/nvm.sh
+    src: roles/05_node/templates/nvm.sh.j2
+    
     dest: /etc/profile.d
   when: node_check is failed
 
