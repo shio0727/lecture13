@@ -71,6 +71,9 @@
   register: rbenv_exists
   changed_when: false
   ignore_errors: true
+  
+- name: Add safe directory for rbenv
+  ansible.builtin.command: git config --global --add safe.directory /home/ec2-user/.rbenv
 
 # GItリポジトリのクローン
 - name: Clone the Git sampleapp_repository
@@ -97,15 +100,6 @@
       group: "ec2-user"
       mode: "775"
       
-- name: Add safe directory for rbenv
-  ansible.builtin.command: git config --global --add safe.directory /home/ec2-user/.rbenv
-
-- name: Set a new URL for rbenv origin
-  ansible.builtin.command: git remote set-url origin https://github.com/sstephenson/rbenv.git
-  args:
-    chdir: /home/ec2-user/.rbenv
-
-
 # rbenvのインストール
 - name: Clone rbenv
   become_user: "{{ ansible_user }}"
@@ -113,6 +107,11 @@
     repo: https://github.com/sstephenson/rbenv.git
     dest: /home/{{ ansible_user }}/.rbenv
   when: rbenv_exists is failed
+  
+- name: Set a new URL for rbenv origin
+  ansible.builtin.command: git remote set-url origin https://github.com/sstephenson/rbenv.git
+  args:
+    chdir: /home/ec2-user/.rbenv
 
 - name: Change ownership to ec2-user
   file:
