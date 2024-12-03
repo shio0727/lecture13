@@ -9,15 +9,15 @@
 - name: Check rbenv
   shell: bash -lc "rbenv --version"
   register: rbenv_exists
-  changed_when: False
+  changed_when: false
   ignore_errors: true
 
 - name: Clone the Git sampleapp_repository
   ansible.builtin.git:
     repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
     dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
-    #version: 'main'
     force: yes
+
 # アプリをデプロイするために必要なdirectoryを作成しておく
 - name: directory created
   file:
@@ -36,6 +36,19 @@
       group: "ec2-user"
       mode: "775"
 
+# Gitの安全なディレクトリ設定
+- name: Add safe directory for rbenv
+  become: true
+  ansible.builtin.command: git config --global --add safe.directory /home/ec2-user/.rbenv
+  register: git_safe_dir_output
+  ignore_errors: true
+  changed_when: false
+
+# Debug safe directory setting
+- name: Debug safe directory setting
+  debug:
+    var: git_safe_dir_output
+
 # rbenvのインストール
 - name: rbenv clone
   become_user: "{{ ansible_user }}"
@@ -43,6 +56,20 @@
     repo: https://github.com/sstephenson/rbenv.git
     dest: /home/ec2-user/.rbenv
   when: rbenv_exists is failed
+
+# GitのリモートURL設定
+- name: Set a new URL for rbenv origin
+  become: true
+  ansible.builtin.command: git remote set-url origin https://github.com/sstephenson/rbenv.git
+  args:
+    chdir: /home/ec2-user/.rbenv
+  register: git_set_url_output
+  ignore_errors: true
+
+# Debug URL setting
+- name: Debug URL setting
+  debug:
+    var: git_set_url_output
 
 - name: Change ownership to ec2-user
   file:
@@ -61,8 +88,6 @@
   when: rbenv_exists is failed
 
 # パスを通す
-
-
 - name: add rbenv/bin path
   lineinfile: 
     path: /home/ec2-user/.bash_profile
@@ -70,14 +95,12 @@
     create: yes
   when: rbenv_exists is failed
 
-
 - name: set .rbenv path
   lineinfile: 
     path: /home/ec2-user/.bash_profile
     line: 'eval "$(rbenv init -)"'
     create: yes
   when: rbenv_exists is failed
-
 
 - name: update .bash_profile
   shell: bash -lc "source /home/ec2-user/.bash_profile"
@@ -87,9 +110,7 @@
   shell: eval "$(rbenv init -)"
   when: rbenv_exists is failed
 
-
 # rubyのインストール
-
 - name: ruby 3.2.3 installed check
   shell: bash -lc "rbenv versions | grep {{ ruby_version }}"
   register: ruby_check
@@ -109,7 +130,6 @@
 - name: rbenv rehash
   shell: bash -lc "rbenv rehash"
   when: ruby_check is failed
-
 
 - name: changed ruby 3.2.3
   shell: bash -lc "rbenv global {{ ruby_version }}"
