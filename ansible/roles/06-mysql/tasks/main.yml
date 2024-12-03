@@ -43,7 +43,7 @@
 - name: Add database.yml.j2
   become: true
   template:
-    src: templates/database.yml.j2
+    src: templates/detabase.yml.j2
     dest: "{{ app_dir }}/config/database.yml"
   vars:
     db_password: "{{ aws_db_pw }}"
