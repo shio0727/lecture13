@@ -7,25 +7,33 @@
       include_role:
         name: 01-yum
 
-    - name: Include 02-git
+    - name: Include 02-ruby
       include_role:
-        name: 02-git
+        name: 02-ruby
         
-    - name: Include 03-ruby
+    - name: Include 03-bundler
       include_role:
-        name: 03-ruby
+        name: 03-bundler
         
-    - name: Include 04-node
+    - name: Include 04-rails
       include_role:
-        name: 04-node
+        name: 04-rails
         
-    - name: Include 05-mysql
+    - name: Include 05-node
       include_role:
-        name: 05-mysql
+        name: 05-node
         
-    - name: Include 06-deploy
+    - name: Include 06-yarn
       include_role:
-        name: 06-deploy
+        name: 06-yarn
+        
+    - name: Include 07-mysql
+      include_role:
+        name: 07-mysql
+        
+     - name: Include 08-deploy
+      include_role:
+        name: 08-deploy
   
   vars: 
     app_dir: /home/ec2-user/raisetech-live8-sample-app
