@@ -1,10 +1,40 @@
 ---
 # rbenv------------------------------------------------------------
+- name: Check if git is installed
+  command: which git
+  register: git_location
+  changed_when: false
+  ignore_errors: true
+  
 - name: check rbenv install
   shell: bash -lc "rbenv --version"
   register: check_rbenv_installed
   changed_when: no
   ignore_errors: yes
+  
+- name: Clone the Git sampleapp_repository
+  ansible.builtin.git:
+    repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
+    dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
+    #version: 'main'
+    force: yes
+# アプリをデプロイするために必要なdirectoryを作成しておく
+- name: directory created
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ app_dir }}/tmp/pids"
+      owner: "ec2-user"
+      group: "ec2-user"
+      mode: "775"
+    - path: "{{ app_dir }}/tmp/sockets"
+      owner: "ec2-user"
+      group: "ec2-user"
+      mode: "775"
 
 - name: install rbenv
   git:

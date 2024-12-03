@@ -1,4 +1,5 @@
 ---
+
 - name: Install pip
   become: true
   yum:
@@ -39,22 +40,14 @@
       - mysql-community-client
     state: present
     
-- name: Read CloudFormation outputs from file
-  set_fact:
-    cfn_outputs: "{{ lookup('file', 'cfn_outputs.json') | from_json }}"
-
-- name: Parse DBEndpoint from CloudFormation outputs
-  set_fact:
-    db_endpoint: "{{ cfn_outputs | selectattr('OutputKey', 'equalto', 'DBEndpoint') | map(attribute='OutputValue') | first }}"
-
 - name: Add database.yml.j2
   become: true
   template:
     src: templates/database.yml.j2
     dest: "{{ app_dir }}/config/database.yml"
   vars:
-    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
-    db_endpoint: "{{ db_endpoint }}"
+    db_password: "{{ aws_db_pw }}"
+    db_endpoint: "{{ aws_db_host }}"
 
 - name: Start MySQL service
   become: true
@@ -67,10 +60,10 @@
   community.mysql.mysql_user:
     name: admin
     host: "%"
-    password: "{{ db_password }}"
+    password: "{{ aws_db_pw }}"
     login_user: admin
-    login_password: "{{ db_password }}"
-    login_host: "{{ db_endpoint }}"
+    login_password: "{{ aws_db_pw }}"
+    login_host: "{{ aws_db_host }}"
     priv: "*.*:ALL,GRANT"
     state: present
     plugin: mysql_native_password

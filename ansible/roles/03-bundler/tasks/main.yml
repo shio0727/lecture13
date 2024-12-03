@@ -11,4 +11,5 @@
     version: "{{ bundler_version }}"
     executable: /home/ec2-user/.rbenv/shims/gem
     user_install: no
+    state: present
   when: check_bundler_installed is failed

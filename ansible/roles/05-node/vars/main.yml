@@ -1,1 +1,3 @@
-node_version: 17.9.1
+nvm_version: v0.39.7
+nodejs_version: v17.9.1
+yarn_version: 1.22.19
