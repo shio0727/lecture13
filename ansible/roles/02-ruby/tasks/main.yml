@@ -1,70 +1,69 @@
 ---
-- name: Check if rbenv is installed
-  shell: rbenv -v
-  register: rbenv_installed
-  ignore_errors: yes
-  
-- name: Check if rbenv is installed
-  shell: bash -lc "rbenv -v"
-  register: rbenv_installed
-  ignore_errors: yes
-
-- name: Clone rbenv if not installed
-  git:
-    repo: 'https://github.com/rbenv/rbenv.git'
-    dest: '/home/ec2-user/.rbenv'
-  when: rbenv_installed is failed
-
-- name: Set rbenv.sh from template
-  template:
-    src: rbenv.sh.j2
-    dest: "/etc/profile.d/rbenv.sh"
-    owner: root
-    group: root
-    mode: 0755
+- name: Install required packages for RVM
+  apt:
+    name: 
+      - curl
+      - gpg
+      - gnupg2
+      - build-essential
+      - libssl-dev
+      - libreadline-dev
+      - zlib1g-dev
+    state: present
   become: yes
 
-- name: Clone ruby-build if not installed
-  git:
-    repo: 'https://github.com/rbenv/ruby-build.git'
-    dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
-  when: rbenv_installed is failed
-
-- name: Reload shell profile
-  shell: "source /etc/profile.d/rbenv.sh"
-  become: yes
-  when: rbenv_installed is failed
-  
-- name: Ensure rbenv is in PATH
-  shell: bash -lc "echo $PATH"
-  register: path_check
-  
-- name: Debug PATH
-  debug:
-    msg: "Current PATH: {{ path_check.stdout }}"
-
-- name: Check if Ruby is already installed
-  shell: rbenv versions | grep {{ ruby_version }}
-  register: ruby_installed
-  ignore_errors: yes
-
-- name: Install Ruby if not already installed
-  shell: rbenv install {{ ruby_version }}
-  when: ruby_installed is failed
-
-- name: Set Ruby as global version
-  shell: rbenv global {{ ruby_version }}
-
-- name: Check if bundler is installed
-  shell: gem list bundler -v {{ bundler_version }} -i
-  register: bundler_installed
-  ignore_errors: yes
-
-- name: Install bundler if not installed
-  shell: gem install bundler -v {{ bundler_version }}
+- name: Import GPG keys
+  shell: |
+    command curl -sSL https://rvm.io/mpapis.asc | gpg2 --import -
+    command curl -sSL https://rvm.io/pkuczynski.asc | gpg2 --import -
   args:
-    chdir: "{{ app_dir }}"
-  when: bundler_installed is failed
+    executable: /bin/bash
+  become: yes
 
-- name: Run rbenv rehash
-  shell: rbenv rehash
+- name: Install RVM
+  shell: |
+    curl -L get.rvm.io | bash -s stable
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Source RVM scripts
+  shell: |
+    source /etc/profile.d/rvm.sh
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Get latest RVM version
+  shell: |
+    source /etc/profile.d/rvm.sh && rvm get head
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Install Ruby version 3.2.3
+  shell: |
+    source /etc/profile.d/rvm.sh && rvm install 3.2.3
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Set Ruby 3.2.3 as default
+  shell: |
+    source /etc/profile.d/rvm.sh && rvm --default use 3.2.3
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Ensure RVM is loaded on login
+  lineinfile:
+    path: /home/ec2-user/.bashrc
+    line: 'source ~/.rvm/scripts/rvm'
+    create: yes
+  become: yes
+
+- name: Verify Ruby installation
+  shell: |
+    source /etc/profile.d/rvm.sh && ruby -v
+  args:
+    executable: /bin/bash
