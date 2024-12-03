@@ -31,7 +31,7 @@
       include_role:
         name: 07-mysql
         
-     - name: Include 08-deploy
+    - name: Include 08-deploy
       include_role:
         name: 08-deploy
   
