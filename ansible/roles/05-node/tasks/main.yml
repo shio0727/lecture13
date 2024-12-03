@@ -36,11 +36,11 @@
     create: yes
   when: node_check is failed
   
-- name: source ~/.bash_profile
-  become: true
-  shell:  bash -lc 'source ~/.bash_profile'
+- name: Source .bash_profile
+  shell: bash -lc 'source /home/{{ ansible_user }}/.bash_profile'
+  become_user: "{{ ansible_user }}"
   when: node_check is failed
-
+  
 - name: node.js
   #become: true
   shell: "bash -lc 'nvm install {{ nodejs_version }}'"
