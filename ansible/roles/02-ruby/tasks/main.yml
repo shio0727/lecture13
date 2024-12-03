@@ -1,25 +1,86 @@
 ---
-# rbenv------------------------------------------------------------
+- name: Check swapfile
+  become_user: root
+  shell: |
+   sudo swapon --show | grep /swapfile
+  register: swapfile_check
+  changed_when: false
+  ignore_errors: true
+
+- name: create swapfile and swap area
+  become_user: root
+  shell: |
+    sudo fallocate -l 2G /swapfile
+  args:
+    creates: /swapfile
+
+- name: Set correct swapfile permissions
+  become_user: root
+  shell: |
+    sudo chmod 600 /swapfile
+  changed_when: false
+
+- name: Check created swapfile
+  become_user: root
+  stat: 
+    path: /swapfile
+  register: swapfile_stat
+
+- name: make swap area
+  become_user: root
+  shell: |
+    sudo mkswap /swapfile
+  register: swapfile_mkswap
+  when: swapfile_check is failed
+
+- name: Check swapfile is already enabled
+  become_user: root
+  shell: |
+   sudo swapon --show
+  register: swapfile_swapon_needed
+  changed_when: false
+  ignore_errors: true
+
+- name: enble swapfile
+  become_user: root
+  shell: |
+    sudo swapon /swapfile
+  when: "'/swapfile' not in swapfile_swapon_needed.stdout"  # 標準出力でswapfileが無い場合実行する
+
+- name: swapfile mount
+  become: true
+  mount:
+    name: none
+    src: /swapfile
+    fstype: swap
+    opts: sw
+    passno: 0
+    dump: 0
+    state: present
+
+# Gitのインストール確認
 - name: Check if git is installed
   command: which git
   register: git_location
   changed_when: false
   ignore_errors: true
-  
-- name: check rbenv install
+
+# rbenvの確認
+- name: Check rbenv
   shell: bash -lc "rbenv --version"
-  register: check_rbenv_installed
-  changed_when: no
-  ignore_errors: yes
-  
+  register: rbenv_exists
+  changed_when: false
+  ignore_errors: true
+
+# GItリポジトリのクローン
 - name: Clone the Git sampleapp_repository
   ansible.builtin.git:
     repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
     dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
-    #version: 'main'
     force: yes
-# アプリをデプロイするために必要なdirectoryを作成しておく
-- name: directory created
+
+# directoryの作成
+- name: Create directories for the app
   file:
     path: "{{ item.path }}"
     state: directory
@@ -36,43 +97,72 @@
       group: "ec2-user"
       mode: "775"
 
-- name: install rbenv
+# rbenvのインストール
+- name: Clone rbenv
+  become_user: "{{ ansible_user }}"
   git:
     repo: https://github.com/sstephenson/rbenv.git
-    dest: /home/ec2-user/.rbenv
-  when: check_rbenv_installed.failed
+    dest: /home/{{ ansible_user }}/.rbenv
+  when: rbenv_exists is failed
 
-- name: Add rbenv to PATH
-  lineinfile: 
-    path: /home/ec2-user/.bash_profile
-    line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
-  when: check_rbenv_installed.failed
+- name: Change ownership to ec2-user
+  file:
+    path: "/home/{{ ansible_user }}/.rbenv"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+    recurse: true
+  become: true
+  when: rbenv_exists is failed
 
-- name: eval rbenv init
-  lineinfile: 
-    path: /home/ec2-user/.bash_profile
-    line: 'eval "$(rbenv init -)"'
-  when: check_rbenv_installed.failed
-  
-- name: load .bash_profile
-  shell: bash -lc "source ~/.bash_profile"
-  when: check_rbenv_installed.failed
-
-# ruby------------------------------------------------------------
-- name: install ruby-build
+- name: Install ruby-build
   git:
     repo: https://github.com/sstephenson/ruby-build.git
-    dest: /home/ec2-user/.rbenv/plugins/ruby-build
-  when: check_rbenv_installed.failed
+    dest: /home/{{ ansible_user }}/.rbenv/plugins/ruby-build
+  when: rbenv_exists is failed
 
-- name: install ruby
-  shell: bash -lc "rbenv install {{ ruby_version }}"
-  when: check_rbenv_installed.failed
+# パスをの設定
+- name: Add rbenv/bin path to .bash_profile
+  lineinfile: 
+    path: /home/{{ ansible_user }}/.bash_profile
+    line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
+    create: yes
+  when: rbenv_exists is failed
 
-- name: rehash rbenv
-  shell: bash -lc "rbenv rehash"
-  when: check_rbenv_installed.failed
+# bash_profile の更新
+- name: Set .rbenv path
+  lineinfile: 
+    path: /home/{{ ansible_user }}/.bash_profile
+    line: 'eval "$(rbenv init -)"'
+    create: yes
+  when: rbenv_exists is failed
 
-- name: set default ruby version
-  shell: bash -lc "rbenv global {{ ruby_version }}"
-  when: check_rbenv_installed.failed
+#.bash_profile をソースする
+- name: Source .bash_profile
+  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile"
+  when: rbenv_exists is failed
+
+# rubyのインストール
+- name: Check if Ruby {{ ruby_version }} is installed
+  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile && rbenv versions | grep {{ ruby_version }}"
+  register: ruby_check
+  changed_when: no
+  ignore_errors: true
+
+- name: Install Ruby {{ ruby_version }}
+  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile && rbenv install {{ ruby_version }} -v"
+  when: ruby_check is failed
+  register: ruby_install
+
+- name: Debug Ruby installation
+  become: true
+  debug:
+    msg: "{{ ruby_install }}"
+
+- name: Rehash rbenv
+  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile && rbenv rehash"
+  when: ruby_install is succeeded
+
+- name: Set global Ruby version to {{ ruby_version }}
+  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile && rbenv global {{ ruby_version }}"
+  when: ruby_install is succeeded
