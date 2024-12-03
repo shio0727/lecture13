@@ -32,3 +32,14 @@
     name: git
     state: present  # 入ってる状態にする
     lock_timeout: 60
+    
+- name: Check if the application directory exists
+  stat:
+    path: "{{ app_dir }}"
+  register: sample_app
+
+- name: Clone the repository
+  git:
+    repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
+    dest: "{{ app_dir }}"
+  when: not sample_app.stat.exists

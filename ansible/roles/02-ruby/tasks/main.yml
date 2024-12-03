@@ -34,6 +34,14 @@
   shell: "source /etc/profile.d/rbenv.sh"
   become: yes
   when: rbenv_installed is failed
+  
+- name: Ensure rbenv is in PATH
+  shell: bash -lc "echo $PATH"
+  register: path_check
+  
+- name: Debug PATH
+  debug:
+    msg: "Current PATH: {{ path_check.stdout }}"
 
 - name: Check if Ruby is already installed
   shell: rbenv versions | grep {{ ruby_version }}
