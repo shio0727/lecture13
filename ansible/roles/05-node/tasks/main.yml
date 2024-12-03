@@ -51,9 +51,8 @@
     USER: "{{ ansible_user }}"
   when: node_check is failed
   ignore_errors: true
-
-
-- name: node install
+  
+  - name: node install
   #become: true
   become_user: "{{ ansible_user }}"
   shell: "bash -lc 'nvm alias default {{ nodejs_version }}'"
@@ -63,3 +62,19 @@
     HOME: "/home/{{ ansible_user }}"
     USER: "{{ ansible_user }}"
   when: node_check is failed
+  
+  - name: installed yarn {{ yarn_version }}
+  shell: |
+    yarn --version | grep {{ yarn_version }}
+  register: yarn_check
+  changed_when: no
+  ignore_errors: true
+
+- name: Install yarn globally
+  shell: bash -lc "npm install --global yarn@{{ yarn_version }}"
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "/home/{{ ansible_user }}"
+    USER: "{{ ansible_user }}"
+  when: yarn_check is failed
