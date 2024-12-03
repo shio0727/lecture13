@@ -6,6 +6,7 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@4.1.3
   aws-cloudformation: orbss/aws-cloudformation@0.1.6
+  ruby: circleci/ruby@2.2.1
   ansible-playbook: orbss/ansible-playbook@0.0.5
  
 
@@ -41,6 +42,7 @@ jobs:
           stack-name: "lecture13-app4-stack"
           template-file-path: "cloudformation/application4.yml"
       - run:
+          name: 環境変数の設定
           command: |
             aws cloudformation describe-stacks --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
             aws cloudformation describe-stacks --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
