@@ -45,10 +45,7 @@
   template:
     src: templates/detabase.yml.j2
     dest: "{{ app_dir }}/config/database.yml"
-  vars:
-    db_password: "{{ aws_db_pw }}"
-    db_endpoint: "{{ aws_db_host }}"
-
+ 
 - name: Start MySQL service
   become: true
   systemd:
