@@ -84,11 +84,10 @@
     src: development.rb.j2
     dest: "{{ app_dir }}/config/environments/development.rb"
 # nginxのアプリ別設定ファイル
-- name: nginx the app configfile of copy 
-  become: true
+- name: Set puma.rb from template
   template:
-    src: puma.conf.j2
-    dest: /etc/nginx/conf.d/puma.conf
+    src: puma.rb.j2
+    dest: "{{ app_dir }}/config/puma.rb"
 # nginxの全般設定ファイル
 - name: nginx the general config of copy 
   become: true
