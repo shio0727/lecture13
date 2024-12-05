@@ -42,11 +42,6 @@ jobs:
           stack-name: "lecture13-app4-stack"
           template-file-path: "cloudformation/application4.yml"
       - run:
-          name: Install dependencies
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y jq
-      - run:
           name: Verify jq installation
           command: jq --version
       - run:
