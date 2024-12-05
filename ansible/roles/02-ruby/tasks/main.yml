@@ -48,16 +48,16 @@
     msg: "{{ rbenv_check }}"
   
 - name: Check if Ruby is already installed
-  shell: bash -lc "rbenv versions | grep {{ ruby_version }}"
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv versions | grep {{ ruby_version }}"
   register: ruby_installed
   ignore_errors: yes
 
 - name: Install Ruby if not already installed
-  shell: bash -lc "rbenv install {{ ruby_version }}"
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv install {{ ruby_version }}"
   when: ruby_installed is failed
 
 - name: Set Ruby as global version
-  shell: rbenv global {{ ruby_version }}
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
 
 - name: Run rbenv rehash
-  shell: rbenv rehash
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"
