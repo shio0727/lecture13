@@ -42,9 +42,6 @@ jobs:
           stack-name: "lecture13-app4-stack"
           template-file-path: "cloudformation/application4.yml"
       - run:
-          name: Verify jq installation
-          command: jq --version
-      - run:
           name: 環境変数の設定
           command: |
             aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[?OutputKey==`RDSInstanceEndpoint`].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
