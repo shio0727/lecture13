@@ -1,3 +1,4 @@
+---
 # Gitのインストール確認
 - name: Check if git is installed
   command: which git
@@ -5,104 +6,59 @@
   changed_when: false
   ignore_errors: true
 
-# rbenvの確認
-- name: Check rbenv
-  shell: bash -lc "rbenv --version"
-  register: rbenv_exists
-  changed_when: false
-  ignore_errors: true
+- name: Check if rbenv is installed
+  shell: rbenv -v
+  register: rbenv_installed
+  ignore_errors: yes
 
-# GItリポジトリのクローン
-- name: Clone the Git sampleapp_repository
-  ansible.builtin.git:
-    repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
-    dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
-    force: yes
-
-# directoryの作成
-- name: Create directories for the app
-  file:
-    path: "{{ item.path }}"
-    state: directory
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
-  loop:
-    - path: "{{ app_dir }}/tmp/pids"
-      owner: "ec2-user"
-      group: "ec2-user"
-      mode: "775"
-    - path: "{{ app_dir }}/tmp/sockets"
-      owner: "ec2-user"
-      group: "ec2-user"
-      mode: "775"
-
-# rbenvのインストール
-- name: Clone rbenv
-  become_user: "{{ ansible_user }}"
+- name: Clone rbenv if not installed
   git:
-    repo: https://github.com/sstephenson/rbenv.git
-    dest: /home/{{ ansible_user }}/.rbenv
-  when: rbenv_exists is failed
+    repo: 'https://github.com/rbenv/rbenv.git'
+    dest: '/home/ec2-user/.rbenv'
+  when: rbenv_installed is failed
 
-- name: Change ownership to ec2-user
-  file:
-    path: "/home/{{ ansible_user }}/.rbenv"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    state: directory
-    recurse: true
-  become: true
-  when: rbenv_exists is failed
+- name: Set rbenv.sh from template
+  template:
+    src: rbenv.sh.j2
+    dest: "/etc/profile.d/rbenv.sh"
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
 
-- name: Install ruby-build
+- name: Clone ruby-build if not installed
   git:
-    repo: https://github.com/sstephenson/ruby-build.git
-    dest: /home/{{ ansible_user }}/.rbenv/plugins/ruby-build
-  when: rbenv_exists is failed
+    repo: 'https://github.com/rbenv/ruby-build.git'
+    dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
+  when: rbenv_installed is failed
 
-# パスをの設定
-- name: Add rbenv/bin path to .bash_profile
-  lineinfile: 
-    path: /home/{{ ansible_user }}/.bash_profile
-    line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
-    create: yes
-  when: rbenv_exists is failed
+- name: Reload shell profile
+  shell: "source /etc/profile.d/rbenv.sh"
+  become: yes
+  when: rbenv_installed is failed
 
-# bash_profile の更新
-- name: Set .rbenv path
-  lineinfile: 
-    path: /home/{{ ansible_user }}/.bash_profile
-    line: 'eval "$(rbenv init -)"'
-    create: yes
-  when: rbenv_exists is failed
+- name: Check if Ruby is already installed
+  shell: rbenv versions | grep {{ ruby_version }}
+  register: ruby_installed
+  ignore_errors: yes
 
-#.bash_profile をソースする
-- name: Source .bash_profile
-  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile"
-  when: rbenv_exists is failed
+- name: Install Ruby if not already installed
+  shell: rbenv install {{ ruby_version }}
+  when: ruby_installed is failed
 
-# rubyのインストール
-- name: Check if Ruby {{ ruby_version }} is installed
-  shell: bash -lc "source /home/{{ ansible_user }}/.bash_profile && rbenv versions | grep {{ ruby_version }}"
-  register: ruby_check
-  changed_when: no
-  ignore_errors: true
+- name: Set Ruby as global version
+  shell: rbenv global {{ ruby_version }}
 
-- name: Install Ruby {{ ruby_version }}
-  shell: bash -lc "rbenv install {{ ruby_version }} -v"
-  when: ruby_check is failed
-  register: ruby_install
+- name: Check if bundler is installed
+  shell: gem list bundler -v {{ bundler_version }} -i
+  register: bundler_installed
+  ignore_errors: yes
 
-- name: Debug Ruby installation
-  become: true
-  debug:
-    msg: "{{ ruby_install }}"
+- name: Install bundler if not installed
+  shell: gem install bundler -v {{ bundler_version }}
+  args:
+    chdir: "{{ app_dir }}"
+  when: bundler_installed is failed
 
-- name: Rehash rbenv
-  shell: bash -lc "rbenv rehash"
-  when: ruby_install is succeeded
-
-- name: Set global Ruby version to {{ ruby_version }}
-  shell: bash -lc "rbenv global {{ ruby_version }}"
-  when: ruby_install is succeeded
+- name: Run rbenv rehash
+  shell: rbenv rehash
