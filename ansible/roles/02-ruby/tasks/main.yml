@@ -36,29 +36,28 @@
   shell: "source /etc/profile.d/rbenv.sh"
   become: yes
   when: rbenv_installed is failed
-
+  
+- name: Check rbenv
+  shell: bash -lc "rbenv --version"
+  register: rbenv_check
+  ignore_errors: yes
+  changed_when: false
+  
+- name: Debug rbenv check
+  debug:
+    msg: "{{ rbenv_check }}"
+  
 - name: Check if Ruby is already installed
-  shell: rbenv versions | grep {{ ruby_version }}
+  shell: bash -lc "rbenv versions | grep {{ ruby_version }}"
   register: ruby_installed
   ignore_errors: yes
 
 - name: Install Ruby if not already installed
-  shell: rbenv install {{ ruby_version }}
+  shell: bash -lc "rbenv install {{ ruby_version }}"
   when: ruby_installed is failed
 
 - name: Set Ruby as global version
   shell: rbenv global {{ ruby_version }}
-
-- name: Check if bundler is installed
-  shell: gem list bundler -v {{ bundler_version }} -i
-  register: bundler_installed
-  ignore_errors: yes
-
-- name: Install bundler if not installed
-  shell: gem install bundler -v {{ bundler_version }}
-  args:
-    chdir: "{{ app_dir }}"
-  when: bundler_installed is failed
 
 - name: Run rbenv rehash
   shell: rbenv rehash
