@@ -102,14 +102,14 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 'ssm:GetParameters'
-                Resource: 'arn:aws:ssm:ap-northeast-1:975050067406:parameter/RDSSecret'
+                Resource: arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:RDSSecret-4hsR55
         - PolicyName: AllowSecretsManagerGetSecretValue
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action: 'secretsmanager:GetSecretValue'
-                Resource: 'arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:RDSSecret-QYLSt3'
+                Resource: arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:RDSSecret-4hsR55
 
   
   S3AccessInstanceProfile:
