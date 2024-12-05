@@ -44,7 +44,7 @@
   become: true
   template:
     src: templates/detabase.yml.j2
-    dest: "{{ app_dir }}/config/database.yml"
+    dest: "{{ app_dir }}/config/detabase.yml"
  
 - name: Start MySQL service
   become: true
