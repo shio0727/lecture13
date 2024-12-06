@@ -5,7 +5,7 @@ Parameters:
   Namebase:
     Type: String
     Default: lecture13
-
+    
 Resources:
   RDSSecret: # ここでRDSのパスワードとなるランダム文字列を生成
     Type: "AWS::SecretsManager::Secret"
@@ -16,12 +16,13 @@ Resources:
         SecretStringTemplate: '{"username": "admin"}'
         GenerateStringKey: "password"
         PasswordLength: 16
-        ExcludeCharacters: '"@/\'
+        ExcludeCharacters: '!@#$%^&*()-_=+[]{}|;:,<.>/?'
 
   # rds作成
   RDS:
     Type: AWS::RDS::DBInstance
     Properties:
+    
       StorageType: gp2
       AllocatedStorage: 20
       PubliclyAccessible: false
