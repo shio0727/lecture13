@@ -51,7 +51,6 @@ Resources:
       
       
 # IAMロールS3接続とAnsible
-  # IAMロールS3接続とAnsible
   S3AccessRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -102,7 +101,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 'secretsmanager:GetSecretValue'
-                Resource: arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:RDSSecret-SKGZ6J
+                Resource: arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:RDSSecret-50Egde
         
 
   
