@@ -6,12 +6,6 @@
     name: python-pip
     state: present
 
-- name: Uninstall MariaDB
-  become: true
-  yum:
-    name: mariadb*
-    state: absent
-
 - name: Install PyMySQL
   become: true
   pip:
