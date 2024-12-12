@@ -7,22 +7,10 @@ Parameters:
     Default: lecture13
     
 Resources:
-  RDSSecret: # ここでRDSのパスワードとなるランダム文字列を生成
-    Type: "AWS::SecretsManager::Secret"
-    Properties:
-      Name: "RDSSecret"
-      Description: "RDS password for my RDS instance"
-      GenerateSecretString:
-        SecretStringTemplate: '{"username": "admin"}'
-        GenerateStringKey: "password"
-        PasswordLength: 16
-        ExcludeCharacters: "0123456789!@#$%^&*()-_=+[]{}|;:,<.>/?`~\\"
-
   # rds作成
   RDS:
     Type: AWS::RDS::DBInstance
     Properties:
-    
       StorageType: gp2
       AllocatedStorage: 20
       PubliclyAccessible: false
@@ -32,8 +20,8 @@ Resources:
       DBInstanceClass: db.t3.micro
       Port: 3306
       BackupRetentionPeriod: 7
-      MasterUsername: admin
-      MasterUserPassword: !Sub '{{resolve:secretsmanager:${RDSSecret}:SecretString:password}}'
+      MasterUsername: !Sub '{{resolve:secretsmanager:MyRDSSecret:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:MyRDSSecret:SecretString:password}}'
       DBInstanceIdentifier: !Sub ${Namebase}-rds
       DBName: RDS10
       Engine: MySQL
@@ -58,4 +46,4 @@ Outputs:
     
   RDSSecret:
     Description: "RDS password"
-    Value: !Sub '{{resolve:secretsmanager:${RDSSecret}:SecretString:password}}'
+    Value: !Sub '{{resolve:secretsmanager:MyRDSSecret:SecretString:password}}'
