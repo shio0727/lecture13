@@ -1,4 +1,44 @@
 ---
+- name: Check if swap file exists
+  stat:
+    path: /swapfile
+  register: swapfile_stat
+  
+- name: Create swap file
+  command: fallocate -l 2G /swapfile
+  when: swapfile_stat.stat.exists == false
+  
+- name: Set permissions on swap file
+  file:
+    path: /swapfile
+    owner: root
+    group: root
+    mode: '0600'
+  when: swapfile_stat.stat.exists == false
+  
+- name: Make swap
+  command: mkswap /swapfile
+  when: swapfile_stat.stat.exists == false
+  
+- name: Enable swap
+  command: swapon /swapfile
+  when: swapfile_stat.stat.exists == false
+  
+- name: Add swapfile to fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/swapfile none swap sw 0 0'
+    create: yes
+  when: swapfile_stat.stat.exists == false
+  
+- name: Add NodeSource repository
+  command: curl -sL https://deb.nodesource.com/setup_14.x | bash -
+  
+- name: Install Node.js
+  apt:
+    name: nodejs
+    state: present
+
 - name: Ensure yarn is installed
   command: npm install -g yarn
   become: true
