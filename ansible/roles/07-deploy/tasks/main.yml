@@ -1,63 +1,17 @@
 ---
-- name: Check swapfile
-  become_user: root
-  shell: |
-   sudo swapon --show | grep /swapfile
-  register: swapfile_check
-  changed_when: false
-  ignore_errors: true
-
-- name: create swapfile and swap area
-  become_user: root
-  shell: |
-    sudo fallocate -l 2G /swapfile
-  args:
-    creates: /swapfile
-
-- name: Set correct swapfile permissions
-  become_user: root
-  shell: |
-    sudo chmod 600 /swapfile
-  changed_when: false
-
-- name: Check created swapfile
-  become_user: root
-  stat: 
-    path: /swapfile
-  register: swapfile_stat
-
-- name: make swap area
-  become_user: root
-  shell: |
-    sudo mkswap /swapfile
-  register: swapfile_mkswap
-  when: swapfile_check is failed
-
-- name: Check swapfile is already enabled
-  become_user: root
-  shell: |
-   sudo swapon --show
-  register: swapfile_swapon_needed
-  changed_when: false
-  ignore_errors: true
-
-- name: enble swapfile
-  become_user: root
-  shell: |
-    sudo swapon /swapfile
-  when: "'/swapfile' not in swapfile_swapon_needed.stdout"  # 標準出力でswapfileが無い場合実行する
-
-- name: swapfile mount
+- name: Ensure yarn is installed
+  command: npm install -g yarn
   become: true
-  mount:
-    name: none
-    src: /swapfile
-    fstype: swap
-    opts: sw
-    passno: 0
-    dump: 0
-    state: present
-
+  
+- name: Install Webpack and Webpack CLI
+  command: yarn add webpack webpack-cli
+  args:
+    chdir: /home/ec2-user/raisetech-live8-sample-app
+    
+- name: Verify Webpack installation
+  command: npx webpack --version
+  args:
+    chdir: /home/ec2-user/raisetech-live8-sample-app
 #- name: installed nginx
   #become: true
   #shell: nginx -version 
@@ -84,10 +38,10 @@
     #src: development.rb.j2
     #dest: "{{ app_dir }}/config/environments/development.rb"
 # nginxのアプリ別設定ファイル
-#- name: Set puma.rb from template
-  #template:
-    #src: puma.rb.j2
-    #dest: "{{ app_dir }}/config/puma.rb"
+- name: Set puma.rb from template
+  template:
+    src: puma.rb.j2
+    dest: "{{ app_dir }}/config/puma.rb"
 # nginxの全般設定ファイル
 #- name: nginx the general config of copy 
   #become: true
