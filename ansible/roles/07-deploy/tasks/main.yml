@@ -1,6 +1,182 @@
 ---
-- name: Set puma.rb from template
-  template:
-    src: puma.rb.j2
-    dest: "{{ app_dir }}/config/puma.rb"
+- name: Check swapfile
+  become_user: root
+  shell: |
+   sudo swapon --show | grep /swapfile
+  register: swapfile_check
+  changed_when: false
+  ignore_errors: true
+
+- name: create swapfile and swap area
+  become_user: root
+  shell: |
+    sudo fallocate -l 2G /swapfile
+  args:
+    creates: /swapfile
+
+- name: Set correct swapfile permissions
+  become_user: root
+  shell: |
+    sudo chmod 600 /swapfile
+  changed_when: false
+
+- name: Check created swapfile
+  become_user: root
+  stat: 
+    path: /swapfile
+  register: swapfile_stat
+
+- name: make swap area
+  become_user: root
+  shell: |
+    sudo mkswap /swapfile
+  register: swapfile_mkswap
+  when: swapfile_check is failed
+
+- name: Check swapfile is already enabled
+  become_user: root
+  shell: |
+   sudo swapon --show
+  register: swapfile_swapon_needed
+  changed_when: false
+  ignore_errors: true
+
+- name: enble swapfile
+  become_user: root
+  shell: |
+    sudo swapon /swapfile
+  when: "'/swapfile' not in swapfile_swapon_needed.stdout"  # 標準出力でswapfileが無い場合実行する
+
+- name: swapfile mount
+  become: true
+  mount:
+    name: none
+    src: /swapfile
+    fstype: swap
+    opts: sw
+    passno: 0
+    dump: 0
+    state: present
+
+#- name: installed nginx
+  #become: true
+  #shell: nginx -version 
+  #register: nginx_check
+  #changed_when: false
+  #ignore_errors: true
+
+#- name: Enable nginx1 repository
+ # become: true
+  #command:
+    #cmd: amazon-linux-extras install -y nginx1
+  #when: nginx_check is failed
+  #register:  nginx_install
+
+#- name: debug_nginx_install
+  #become: true
+  #debug:
+    #msg: "{{ nginx_install }}"
+
+
+#- name: development.rb copy 
+  #become: true
+  #template:
+    #src: development.rb.j2
+    #dest: "{{ app_dir }}/config/environments/development.rb"
+# nginxのアプリ別設定ファイル
+#- name: Set puma.rb from template
+  #template:
+    #src: puma.rb.j2
+    #dest: "{{ app_dir }}/config/puma.rb"
 # nginxの全般設定ファイル
+#- name: nginx the general config of copy 
+  #become: true
+  #template:
+    #src: nginx.conf.j2
+    #dest: /etc/nginx/nginx.conf
+
+#- name: Add puma.service.sample
+  #become: true
+  #template:
+    #src: puma.service.sample.j2
+    #dest: /etc/systemd/system/puma.service
+
+#- name: copy of storage.yml
+  #template:
+    #src: storage.yml.j2
+    #dest: "{{ app_dir }}/config/storage.yml"
+# ファイルの指定した行に追記するtask、アプリのルートを正しく修正するため
+#- name: "insert or replace directory path"
+  #lineinfile:  
+    #path: /home/ec2-user/raisetech-live8-sample-app/config/puma.rb
+    #insertafter: '^# directory "/var/www/rails/raisetech-live8-sample-app"$'
+    #line: ' directory "/home/ec2-user/raisetech-live8-sample-app"'
+
+#- name: start nginx
+  #become: true
+  #service:
+    #name: nginx
+    #state: started
+    #enabled: true
+
+#- name: bundle install
+  #shell: bash -lc bundle install
+  #args:
+    #chdir: "{{ app_dir}}"
+
+#- name: gem install rails
+  #shell: "/home/ec2-user/.rbenv/shims/gem install rails"
+  #environment:
+    #PATH: "{{ ansible_env.PATH }}:/home/ec2-user/.rbenv/shims:/home/ec2-user/.rbenv/bin"
+    #RBENV_ROOT: "/home/ec2-user/.rbenv"
+
+
+#- name: deploy environment setup
+  #shell: |
+    #bash -lc "bin/setup"
+  #args:
+    #chdir: "{{ app_dir }}"
+  #ignore_errors: true
+
+# mini_magick を使えるように追記した設定ファイルをコピー
+#- name: configfile copy Rails app
+  #template:
+    #src: application.rb.j2
+    #dest: "{{ app_dir }}/config/application.rb"
+
+#- name: rails assets:precompile
+  #shell: |
+    #bash -lc "rails assets:precompile"
+  #args:
+    #chdir: "{{ app_dir }}"
+  #ignore_errors: true
+
+#- name: start nginx
+  #become: true
+  #service:
+    #name: nginx
+    #state: restarted
+    
+#- name: Change ownership of application directory
+  #ansible.builtin.file:
+    #path: /home/ec2-user/raisetech-live8-sample-app
+    #owner: ec2-user
+    #group: ec2-user
+    #recurse: yes
+    
+#- name: Create log directory if not exists
+  #ansible.builtin.file:
+    #path: /home/ec2-user/raisetech-live8-sample-app/log
+    #state: directory
+    #owner: ec2-user
+    #group: ec2-user
+    
+#- name: Reload systemd manager configuration
+  #ansible.builtin.command: systemctl daemon-reload
+  
+#- name: puma service start 
+  #become: true
+  #service:  
+    #name: puma.service
+    #state: restarted
+    #enabled: true
