@@ -1,5 +1,4 @@
 ---
-
 - name: Set puma.rb from template
   template:
     src: puma.rb.j2
