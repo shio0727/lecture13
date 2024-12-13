@@ -4,6 +4,10 @@
   register: check_bundler_installed
   changed_when: no
   ignore_errors: yes
+  
+- name: Ensure ownership is set to ec2-user
+  ansible.builtin.command:
+    cmd: sudo chown -R ec2-user:ec2-user /home/ec2-user
 
 - name: install bundler
   gem: 
