@@ -18,7 +18,7 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-          #SourceSecurityGroupId: !Ref SecurityGroupALB
+          SourceSecurityGroupId: !Ref SecurityGroupALB
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
