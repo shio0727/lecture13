@@ -38,6 +38,9 @@ jobs:
           stack-name: "lecture13-app3-stack"
           template-file-path: "cloudformation/application3.yml"
           capabilities: CAPABILITY_NAMED_IAM
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-app4-stack"
+          template-file-path: "cloudformation/application4.yml"
 
       - run:
           name: 環境変数の設定
