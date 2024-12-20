@@ -31,11 +31,11 @@
     create: yes
   when: swapfile_stat.stat.exists == false
   
-- name: Add NodeSource repository
-  shell: curl -sL https://rpm.nodesource.com/setup_14.x | bash -
-  args:
-    executable: /bin/bash
-    
+- name: Add NodeSource repository for Node.js 18.x
+　shell: curl -sL https://rpm.nodesource.com/setup_18.x | bash -
+　args:
+　  executable: /bin/bash
+　  
 - name: Install Node.js
   yum:
     name: nodejs
@@ -55,29 +55,29 @@
   args:
     chdir: /home/ec2-user/raisetech-live8-sample-app
     
-#- name: Set puma.rb from template
-  #template:
-    #src: puma.rb.j2
-    #dest: "{{ app_dir }}/config/puma.rb"
+- name: Set puma.rb from template
+  template:
+    src: puma.rb.j2
+    dest: "{{ app_dir }}/config/puma.rb"
     
-#- name: installed nginx
-  #become: true
-  #shell: nginx -version 
-  #register: nginx_check
-  #changed_when: false
-  #ignore_errors: true
+- name: installed nginx
+  become: true
+  shell: nginx -version 
+  register: nginx_check
+  changed_when: false
+  ignore_errors: true
 
-#- name: Enable nginx1 repository
-  #become: true
-  #command:
-    #cmd: amazon-linux-extras install -y nginx1
-  #when: nginx_check is failed
-  #register:  nginx_install
+- name: Enable nginx1 repository
+  become: true
+  command:
+    cmd: amazon-linux-extras install -y nginx1
+  when: nginx_check is failed
+  register:  nginx_install
 
-#- name: debug_nginx_install
-  #become: true
-  #debug:
-    #msg: "{{ nginx_install }}"
+- name: debug_nginx_install
+  become: true
+  debug:
+    msg: "{{ nginx_install }}"
 
 #- name: nginx the general config of copy 
   #become: true
