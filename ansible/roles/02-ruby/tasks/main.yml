@@ -15,6 +15,7 @@
   git:
     repo: 'https://github.com/rbenv/rbenv.git'
     dest: '/home/ec2-user/.rbenv'
+  when: rbenv_installed is failed
  
 
 - name: Set rbenv.sh from template
