@@ -15,7 +15,7 @@
   git:
     repo: 'https://github.com/rbenv/rbenv.git'
     dest: '/home/ec2-user/.rbenv'
-  when: rbenv_installed is failed  # ここにwhen条件を移動
+  when: rbenv_installed is failed
 
 - name: Set rbenv.sh from template
   template:
@@ -30,46 +30,34 @@
   git:
     repo: 'https://github.com/rbenv/ruby-build.git'
     dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
-  when: rbenv_installed is failed  # ここにwhen条件を移動
+  when: rbenv_installed is failed
 
 - name: Reload shell profile
   shell: "source /etc/profile.d/rbenv.sh"
   become: yes
-
+  when: rbenv_installed is failed
+  
 - name: Check rbenv
   shell: bash -lc "rbenv --version"
   register: rbenv_check
   ignore_errors: yes
   changed_when: false
-
+  
 - name: Debug rbenv check
   debug:
     msg: "{{ rbenv_check }}"
-
+  
 - name: Check if Ruby is already installed
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv versions | grep {{ ruby_version }}"
   register: ruby_installed
   ignore_errors: yes
 
 - name: Install Ruby if not already installed
-  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv install {{ ruby_version }}"
-  async: 600  # タイムアウトを10分に設定
-  poll: 0
-  register: long_running_task
-  when: ruby_installed.rc != 0
-
-- name: Wait for Ruby installation to complete
-  async_status:
-    jid: "{{ long_running_task.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 30
-  delay: 20
+  shell: bash -lc "rbenv install {{ ruby_version }}"
+  when: ruby_installed is failed
 
 - name: Set Ruby as global version
-  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
-  when: ruby_installed is failed
+  shell: rbenv global {{ ruby_version }}
 
 - name: Run rbenv rehash
-  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"
-  when: ruby_installed is failed
+  shell: rbenv rehash
