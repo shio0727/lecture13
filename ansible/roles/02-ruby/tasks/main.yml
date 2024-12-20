@@ -30,10 +30,12 @@
   git:
     repo: 'https://github.com/rbenv/ruby-build.git'
     dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
-
+　when: rbenv_installed is failed
+　
 - name: Reload shell profile
   shell: "source /etc/profile.d/rbenv.sh"
   become: yes
+  when: rbenv_installed is failed
  
 - name: Check rbenv
   shell: bash -lc "rbenv --version"
@@ -53,11 +55,12 @@
 
 - name: Install Ruby if not already installed
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv install {{ ruby_version }}"
+  when: ruby_check is failed
  
 
 - name: Set Ruby as global version
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
- 
+
   
 - name: Run rbenv rehash
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"
