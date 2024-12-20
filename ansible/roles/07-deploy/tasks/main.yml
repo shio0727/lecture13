@@ -31,10 +31,10 @@
     create: yes
   when: swapfile_stat.stat.exists == false
     
-#- name: Set puma.rb from template
-  #template:
-    #src: puma.rb.j2
-    #dest: "{{ app_dir }}/config/puma.rb"
+- name: Set puma.rb from template
+  template:
+    src: puma.rb.j2
+    dest: "{{ app_dir }}/config/puma.rb"
     
 #- name: installed nginx
   #become: true
