@@ -61,17 +61,17 @@
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
 
-#- name: Add puma.service.sample
-  #become: true
-  #template:
-    #src: puma.service.sample.j2
-    #dest: /etc/systemd/system/puma.service
+- name: Add puma.service.sample
+  become: true
+  template:
+    src: puma.service.sample.j2
+    dest: /etc/systemd/system/puma.service
     
-#- name: development.rb copy 
-  #become: true
-  #template:
-    #src: development.rb.j2
-    #dest: "{{ app_dir }}/config/environments/development.rb"
+- name: development.rb copy 
+  become: true
+  template:
+    src: development.rb.j2
+    dest: "{{ app_dir }}/config/environments/development.rb"
 
 #- name: copy of storage.yml
   #template:
