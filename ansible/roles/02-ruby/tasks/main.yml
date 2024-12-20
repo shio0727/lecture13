@@ -10,12 +10,13 @@
   shell: rbenv -v
   register: rbenv_installed
   ignore_errors: yes
+  changed_when: false
 
 - name: Clone rbenv if not installed
   git:
     repo: 'https://github.com/rbenv/rbenv.git'
     dest: '/home/ec2-user/.rbenv'
-  when: rbenv_installed is failed
+  when: rbenv_installed.rc == 1
 
 - name: Set rbenv.sh from template
   template:
@@ -30,12 +31,12 @@
   git:
     repo: 'https://github.com/rbenv/ruby-build.git'
     dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
-  when: rbenv_installed is failed
+  when: rbenv_installed.rc == 1
 
 - name: Reload shell profile
   shell: "source /etc/profile.d/rbenv.sh"
   become: yes
-  when: rbenv_installed is failed
+  when: rbenv_installed.rc == 1
   
 - name: Check rbenv
   shell: bash -lc "rbenv --version"
@@ -51,13 +52,16 @@
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv versions | grep {{ ruby_version }}"
   register: ruby_installed
   ignore_errors: yes
+  changed_when: false
 
 - name: Install Ruby if not already installed
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv install {{ ruby_version }}"
-  when: ruby_installed is failed
+  when: ruby_installed.rc == 1
 
 - name: Set Ruby as global version
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
-
+  when: ruby_installed.rc == 1
+  
 - name: Run rbenv rehash
   shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"
+  when: ruby_installed.rc == 1

@@ -31,29 +31,29 @@
     create: yes
   when: swapfile_stat.stat.exists == false
     
-- name: Set puma.rb from template
-  template:
-    src: puma.rb.j2
-    dest: "{{ app_dir }}/config/puma.rb"
+#- name: Set puma.rb from template
+  #template:
+    #src: puma.rb.j2
+    #dest: "{{ app_dir }}/config/puma.rb"
     
-- name: installed nginx
-  become: true
-  shell: nginx -version 
-  register: nginx_check
-  changed_when: false
-  ignore_errors: true
+#- name: installed nginx
+  #become: true
+  #shell: nginx -version 
+  #register: nginx_check
+  #changed_when: false
+  #ignore_errors: true
 
-- name: Enable nginx1 repository
-  become: true
-  command:
-    cmd: amazon-linux-extras install -y nginx1
-  when: nginx_check is failed
-  register: nginx_install
+#- name: Enable nginx1 repository
+  #become: true
+  #command:
+    #cmd: amazon-linux-extras install -y nginx1
+  #when: nginx_check is failed
+  #register: nginx_install
 
-- name: debug_nginx_install
-  become: true
-  debug:
-    msg: "{{ nginx_install }}"
+#- name: debug_nginx_install
+  #become: true
+  #debug:
+    #msg: "{{ nginx_install }}"
 
 # コメントアウトされたタスクの削除（必要に応じてアンコメントしてください）
 #- name: nginx the general config of copy 
@@ -111,10 +111,10 @@
     #chdir: "{{ app_dir }}"
   #ignore_errors: true
 
-- name: configfile copy Rails app
-  template:
-    src: application.rb.j2
-    dest: "{{ app_dir }}/config/application.rb"
+#- name: configfile copy Rails app
+  #template:
+    #src: application.rb.j2
+    #dest: "{{ app_dir }}/config/application.rb"
 
 #- name: rails assets:precompile
   #shell: |
