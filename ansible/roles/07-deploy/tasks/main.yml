@@ -30,30 +30,6 @@
     line: '/swapfile none swap sw 0 0'
     create: yes
   when: swapfile_stat.stat.exists == false
-  
-- name: Add NodeSource repository for Node.js 18.x
-  shell: curl -sL https://rpm.nodesource.com/setup_18.x | bash -
-  args:
-    executable: /bin/bash
-  
-- name: Install Node.js
-  yum:
-    name: nodejs
-    state: present
-
-- name: Ensure yarn is installed
-  command: npm install -g yarn
-  become: true
-  
-- name: Install Webpack and Webpack CLI
-  command: yarn add webpack webpack-cli
-  args:
-    chdir: /home/ec2-user/raisetech-live8-sample-app
-    
-- name: Verify Webpack installation
-  command: npx webpack --version
-  args:
-    chdir: /home/ec2-user/raisetech-live8-sample-app
     
 - name: Set puma.rb from template
   template:
