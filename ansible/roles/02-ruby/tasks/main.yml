@@ -56,7 +56,7 @@
   async: 600  # タイムアウトを10分に設定
   poll: 0
   register: long_running_task
-  when: ruby_installed is failed
+  when: ruby_installed.rc != 0
 
 - name: Wait for Ruby installation to complete
   async_status:
