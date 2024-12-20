@@ -57,7 +57,7 @@
   when: ruby_installed is failed
 
 - name: Set Ruby as global version
-  shell: rbenv global {{ ruby_version }}
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
 
 - name: Run rbenv rehash
-  shell: rbenv rehash
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"
