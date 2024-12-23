@@ -71,11 +71,11 @@
     dest: /etc/systemd/system/puma.service
     
 #ELBを追加しての動作確認
-#- name: development.rb copy 
-  #become: true
-  #template:
-    #src: development.rb.j2
-    #dest: "{{ app_dir }}/config/environments/development.rb"
+- name: development.rb copy 
+  become: true
+  template:
+    src: development.rb.j2
+    dest: "{{ app_dir }}/config/environments/development.rb"
 
 #- name: copy of storage.yml
   #template:
