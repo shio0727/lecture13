@@ -38,37 +38,37 @@
     dest: "{{ app_dir }}/config/puma.rb"
     
 #nginx単体起動
-#- name: installed nginx
-  #become: true
-  #shell: nginx -version 
-  #register: nginx_check
-  #changed_when: false
-  #ignore_errors: true
+- name: installed nginx
+  become: true
+  shell: nginx -version 
+  register: nginx_check
+  changed_when: false
+  ignore_errors: true
 
-#- name: Enable nginx1 repository
-  #become: true
-  #command:
-    #cmd: amazon-linux-extras install -y nginx1
-  #when: nginx_check is failed
-  #register: nginx_install
+- name: Enable nginx1 repository
+  become: true
+  command:
+    cmd: amazon-linux-extras install -y nginx1
+  when: nginx_check is failed
+  register: nginx_install
 
-#- name: debug_nginx_install
-  #become: true
-  #debug:
-    #msg: "{{ nginx_install }}"
+- name: debug_nginx_install
+  become: true
+  debug:
+    msg: "{{ nginx_install }}"
     
 #組み込みサーバーとnginxでのアプリケーション起動
-#- name: nginx the general config of copy 
-  #become: true
-  #template:
-    #src: nginx.conf.j2
-    #dest: /etc/nginx/nginx.conf
+- name: nginx the general config of copy 
+  become: true
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
 
-#- name: Add puma.service.sample
-  #become: true
-  #template:
-    #src: puma.service.sample.j2
-    #dest: /etc/systemd/system/puma.service
+- name: Add puma.service.sample
+  become: true
+  template:
+    src: puma.service.sample.j2
+    dest: /etc/systemd/system/puma.service
     
 #　ELBを追加しての動作確認
 #- name: development.rb copy 
