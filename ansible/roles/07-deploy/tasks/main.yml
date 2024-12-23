@@ -32,10 +32,10 @@
   when: swapfile_stat.stat.exists == false
     
 #組み込みサーバーとunixsocket使用の動作確認
-#- name: Set puma.rb from template
-  #template:
-    #src: puma.rb.j2
-    #dest: "{{ app_dir }}/config/puma.rb"
+- name: Set puma.rb from template
+  template:
+    src: puma.rb.j2
+    dest: "{{ app_dir }}/config/puma.rb"
     
 #nginx単体起動
 #- name: installed nginx
