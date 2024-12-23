@@ -70,7 +70,7 @@
     src: puma.service.sample.j2
     dest: /etc/systemd/system/puma.service
     
-#ELBを追加しての動作確認
+#　ELBを追加しての動作確認
 - name: development.rb copy 
   become: true
   template:
