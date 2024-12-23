@@ -28,9 +28,9 @@
       include_role:
         name: 06-mysql
         
-    #- name: Include 07-deploy
-      #include_role:
-        #name: 07-deploy
+    - name: Include 07-deploy
+      include_role:
+        name: 07-deploy
   vars: 
     app_dir: /home/ec2-user/raisetech-live8-sample-app
     ansible_user: ec2-user
