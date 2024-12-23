@@ -34,10 +34,10 @@ jobs:
       - aws-cloudformation/deploy:
           stack-name: "lecture13-app2-stack"
           template-file-path: "cloudformation/application2.yml"
-      - aws-cloudformation/deploy:
-          stack-name: "lecture13-app3-stack"
-          template-file-path: "cloudformation/application3.yml"
-          capabilities: CAPABILITY_NAMED_IAM
+      #- aws-cloudformation/deploy:
+          #stack-name: "lecture13-app3-stack"
+          #template-file-path: "cloudformation/application3.yml"
+          #capabilities: CAPABILITY_NAMED_IAM
       #- aws-cloudformation/deploy:
           #stack-name: "lecture13-app4-stack"
           #template-file-path: "cloudformation/application4.yml"
@@ -48,7 +48,7 @@ jobs:
             aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[?OutputKey==`RDSInstanceEndpoint`].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
             password=$(aws secretsmanager get-secret-value --secret-id MyRDSSecret --region ap-northeast-1 --query 'SecretString' --output text | jq -r .password)
             echo $password > /tmp/AWS_DB_PW.txt
-            aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
+            
             
             
             
@@ -68,7 +68,7 @@ jobs:
           command: |
             echo "export AWS_DB_HOST=$(cat /tmp/AWS_DB_HOST.txt)" >> $BASH_ENV
             echo "export AWS_DB_PW=$(cat /tmp/AWS_DB_PW.txt)" >> $BASH_ENV
-            echo "export AWS_ALB_HOST=$(cat /tmp/AWS_ALB_HOST.txt)" >> $BASH_ENV
+            
             
       - add_ssh_keys:
           fingerprints:
