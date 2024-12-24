@@ -95,6 +95,39 @@ jobs:
       - ansible-playbook/playbook:
           playbook: ansible/playbook.yml
           playbook-options: -u ec2-user -i ansible/inventory --private-key ~/.ssh/authorized_key
+          
+  execute-serverspec:
+    docker:
+      - image: cimg/ruby:3.2.3  
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - add_ssh_keys:
+          fingerprints:
+            - SHA256:1L4djQiuMIWSJwXsMSIW9HJqz7IjPsQpARLqhU6H+o0
+      - run: ruby --version
+      - run:
+          name: serverspec setup 
+          command: |
+            cd serverspec
+            bundle install
+      - run:
+          name: create ~/.ssh/config target config
+          command: |
+            set -x
+            source .env_var
+            mkdir -p ~/.ssh
+            echo "Host target" >> ~/.ssh/config
+            echo "Host target" >> ~/.ssh/config
+            echo "HostName 18.181.106.211" >> ~/.ssh/config
+            echo "User ec2-user" >> ~/.ssh/config
+      - run:
+          name: execution for serverspec test
+          command: |
+            cd serverspec/spec
+            rake spec
+          
       
           
 # Orchestrate jobs using workflows
@@ -106,6 +139,9 @@ workflows:
       - execute-ansible:
           requires:
             - execute-cloudformation
+      - execute-serverspec:
+          requires:
+            - execute-ansible
   
 # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
