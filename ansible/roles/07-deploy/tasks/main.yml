@@ -77,10 +77,10 @@
     src: development.rb.j2
     dest: "{{ app_dir }}/config/environments/development.rb"
 
-#- name: copy of storage.yml
-  #template:
-    #src: storage.yml.j2
-    #dest: "{{ app_dir }}/config/storage.yml"
+- name: copy of storage.yml
+  template:
+    src: storage.yml.j2
+    dest: "{{ app_dir }}/config/storage.yml"
 # ファイルの指定した行に追記するtask、アプリのルートを正しく修正するため
 #- name: "insert or replace directory path"
   #lineinfile:  
