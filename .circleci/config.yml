@@ -116,9 +116,11 @@ jobs:
           name: create ~/.ssh/config target config
           command: |
             set -x
-            source .env_var
+            source /tmp/AWS_DB_HOST.txt
+            source /tmp/AWS_DB_PW.txt
+            source /tmp/AWS_ALB_HOST.txt
+            source /tmp/AWS_S3_NAME.txt
             mkdir -p ~/.ssh
-            echo "Host target" >> ~/.ssh/config
             echo "Host target" >> ~/.ssh/config
             echo "HostName 18.181.106.211" >> ~/.ssh/config
             echo "User ec2-user" >> ~/.ssh/config
