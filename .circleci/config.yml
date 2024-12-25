@@ -112,6 +112,8 @@ jobs:
           command: |
             cd serverspec
             bundle install
+            gem install ed25519 -v '~> 1.2'
+            gem install bcrypt_pbkdf -v '~> 1.0'
       - run:
           name: create ~/.ssh/config target config
           command: |
@@ -139,8 +141,6 @@ jobs:
           command: |
             cd serverspec/spec
             rake spec
-          
-      
           
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
