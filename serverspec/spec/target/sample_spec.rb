@@ -6,6 +6,16 @@ describe package('nginx') do
   it { should be_installed }
 end
 
+describe command('yarn --version') do
+  let(:disable_sudo) { true }
+  its(:stdout) { should match /^1\.22\.19/ }
+end
+
+describe command('node --version') do
+  let(:disable_sudo) { true }
+  its(:stdout) { should match /^v17\.9\.1$/ }
+end
+
 describe command('/home/ec2-user/.rbenv/shims/ruby -v') do
   its(:stdout) { should include "ruby 3.2.3" }
 end
