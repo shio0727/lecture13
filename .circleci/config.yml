@@ -116,15 +116,25 @@ jobs:
           name: create ~/.ssh/config target config
           command: |
             set -x
-            source /tmp/AWS_DB_HOST.txt
-            source /tmp/AWS_DB_PW.txt
-            source /tmp/AWS_ALB_HOST.txt
-            source /tmp/AWS_S3_NAME.txt
+            AWS_DB_HOST=$(cat /tmp/AWS_DB_HOST.txt)
+            AWS_DB_PW=$(cat /tmp/AWS_DB_PW.txt)
+            AWS_ALB_HOST=$(cat /tmp/AWS_ALB_HOST.txt)
+            AWS_S3_NAME=$(cat /tmp/AWS_S3_NAME.txt)
+            echo "export AWS_DB_HOST=${AWS_DB_HOST}" >> $BASH_ENV
+            echo "export AWS_DB_PW=${AWS_DB_PW}" >> $BASH_ENV
+            echo "export AWS_ALB_HOST=${AWS_ALB_HOST}" >> $BASH_ENV
+            echo "export AWS_S3_NAME=${AWS_S3_NAME}" >> $BASH_ENV
+            source $BASH_ENV
+            
+      - run:
+          name: create ~/.ssh/config target config
+          command: |
             mkdir -p ~/.ssh
             echo "Host target" >> ~/.ssh/config
             echo "HostName 18.181.106.211" >> ~/.ssh/config
             echo "User ec2-user" >> ~/.ssh/config
-      - run:
+            
+      - run:  
           name: execution for serverspec test
           command: |
             cd serverspec/spec
