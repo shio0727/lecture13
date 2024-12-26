@@ -1,0 +1,80 @@
+---
+
+- name: check node.js installed
+  shell: "node --version | grep {{ nodejs_version }}"
+  register: node_check
+  changed_when: no
+  ignore_errors: true
+
+
+- name: Download and install NVM
+  shell: >
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "/home/{{ ansible_user }}"
+    USER: "{{ ansible_user }}"
+    mode: '775'
+  when: node_check is failed
+ 
+
+- name: source ~/.nvm/nvm.sh
+  become: true
+  copy:
+    src: roles/05-node/templates/nvm.sh.j2
+    dest: /etc/profile.d
+  when: node_check is failed
+
+- name: Add NVM source lines to .bash_profile
+  become_user: "{{ ansible_user }}"
+  lineinfile:
+    path: /home/{{ ansible_user }}/.bash_profile
+    line: |
+      export NVM_DIR="/home/{{ ansible_user }}/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    create: yes
+  when: node_check is failed
+  
+- name: Source .bash_profile
+  shell: bash -lc 'source /home/{{ ansible_user }}/.bash_profile'
+  become_user: "{{ ansible_user }}"
+  when: node_check is failed
+  
+- name: node.js
+  #become: true
+  shell: "bash -lc 'nvm install {{ nodejs_version }}'"
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "/home/{{ ansible_user }}"
+    USER: "{{ ansible_user }}"
+  when: node_check is failed
+  ignore_errors: true
+  
+- name: node install
+  #become: true
+  become_user: "{{ ansible_user }}"
+  shell: "bash -lc 'nvm alias default {{ nodejs_version }}'"
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "/home/{{ ansible_user }}"
+    USER: "{{ ansible_user }}"
+  when: node_check is failed
+  
+- name: installed yarn {{ yarn_version }}
+  shell: |
+    yarn --version | grep {{ yarn_version }}
+  register: yarn_check
+  changed_when: no
+  ignore_errors: true
+
+- name: Install yarn globally
+  shell: bash -lc "npm install --global yarn@{{ yarn_version }}"
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "/home/{{ ansible_user }}"
+    USER: "{{ ansible_user }}"
+  when: yarn_check is failed

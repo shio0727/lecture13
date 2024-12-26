@@ -1,0 +1,63 @@
+---
+# Gitのインストール確認
+- name: Check if git is installed
+  command: which git
+  register: git_location
+  changed_when: false
+  ignore_errors: true
+
+- name: Check if rbenv is installed
+  shell: rbenv -v
+  register: rbenv_installed
+  ignore_errors: yes
+
+- name: Clone rbenv if not installed
+  git:
+    repo: 'https://github.com/rbenv/rbenv.git'
+    dest: '/home/ec2-user/.rbenv'
+  when: rbenv_installed is failed
+
+- name: Set rbenv.sh from template
+  template:
+    src: rbenv.sh.j2
+    dest: "/etc/profile.d/rbenv.sh"
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
+
+- name: Clone ruby-build if not installed
+  git:
+    repo: 'https://github.com/rbenv/ruby-build.git'
+    dest: '/home/ec2-user/.rbenv/plugins/ruby-build'
+  when: rbenv_installed is failed
+
+- name: Reload shell profile
+  shell: "source /etc/profile.d/rbenv.sh"
+  become: yes
+  when: rbenv_installed is failed
+  
+- name: Check rbenv
+  shell: bash -lc "rbenv --version"
+  register: rbenv_check
+  ignore_errors: yes
+  changed_when: false
+  
+- name: Debug rbenv check
+  debug:
+    msg: "{{ rbenv_check }}"
+  
+- name: Check if Ruby is already installed
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv versions | grep {{ ruby_version }}"
+  register: ruby_installed
+  ignore_errors: yes
+
+- name: Install Ruby if not already installed
+  shell: bash -lc "rbenv install {{ ruby_version }}"
+  when: ruby_installed is failed
+
+- name: Set Ruby as global version
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv global {{ ruby_version }}"
+
+- name: Run rbenv rehash
+  shell: bash -lc "source /etc/profile.d/rbenv.sh && rbenv rehash"

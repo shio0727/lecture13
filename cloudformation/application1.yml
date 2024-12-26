@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application_Layer Template
+
+Parameters:
+  NameBase: 
+    Description: for security
+    Type: String
+    Default: lecture13
+  InstanceType:
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+      - t2.medium
+    
+  EC2AMI:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+    Description: The AMI ID for the EC2 instance
+    
+Resources:
+# EC2作成
+  EC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      NetworkInterfaces:
+        - SubnetId: !ImportValue lecture13-PublicSubnet1id
+          GroupSet:
+            - !ImportValue lecture13-SecurityGroupEC2
+          DeviceIndex: 0
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref EC2AMI
+      IamInstanceProfile: !Ref S3AccessInstanceProfile
+      Tags:
+        - Key: Name
+          Value: !Sub  ${NameBase}-ec21a
+      KeyName: kadai4-key
+      
+# Elastic IP作成
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+# EIPをEC2にアタッチ
+  EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EC2
+      EIP: !Ref ElasticIP
+      
+      
+# IAMロールS3接続とAnsible
+  S3AccessRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: lecture13
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+                - s3:ListBucket
+                - s3:DeleteObject
+                - s3:GetBucketLocation
+              Resource: "arn:aws:s3:::*"
+            - Effect: Allow
+              Action: "*"
+              Resource:
+                - "arn:aws:s3:::lecture13-s3bucket-ns"
+                - "arn:aws:s3:::lecture13-s3bucket-ns/*"
+        - PolicyName: ELBPolicyforansible
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticloadbalancing:DescribeLoadBalancers
+                  - elasticloadbalancing:DescribeTags
+                  - elasticloadbalancing:DescribeListeners
+                  - elasticloadbalancing:DescribeTargetGroups
+                  - elasticloadbalancing:DescribeTargetHealth
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+        - PolicyName: AllowSecretsManagerGetSecretValue
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'secretsmanager:GetSecretValue'
+                Resource: arn:aws:secretsmanager:ap-northeast-1:975050067406:secret:MyRDSSecret-oJpF6B
+        
+
+  
+  S3AccessInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref S3AccessRole 
+  
+Outputs:
+  InstanceId:
+    Description: The Instance ID
+    Value: !Ref EC2
+    Export:
+      Name: !Sub  ${NameBase}-ec2id  
+      
+  

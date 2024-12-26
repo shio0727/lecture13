@@ -1,0 +1,21 @@
+---
+- name: check bundler install
+  shell: /home/ec2-user/.rbenv/shims/bundler --version
+  register: check_bundler_installed
+  changed_when: no
+  ignore_errors: yes
+  
+- name: Ensure ownership is set to ec2-user
+  ansible.builtin.command:
+    cmd: sudo chown -R ec2-user:ec2-user /home/ec2-user
+
+- name: install bundler
+  gem: 
+    name: bundler
+    version: "{{ bundler_version }}"
+    executable: /home/ec2-user/.rbenv/shims/gem
+    user_install: no
+    state: present
+  environment:
+    RBENV_VERSION: "{{ ruby_version }}"
+  when: check_bundler_installed is failed

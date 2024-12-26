@@ -1,0 +1,159 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
+version: 2.1
+
+
+orbs:
+  aws-cli: circleci/aws-cli@4.1.3
+  aws-cloudformation: orbss/aws-cloudformation@0.1.6
+  ruby: circleci/ruby@2.2.1
+  ansible-playbook: orbss/ansible-playbook@0.0.5
+ 
+
+# Define a job to be invoked later in a workflow.
+# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
+jobs:
+  execute-cloudformation:
+    executor: aws-cloudformation/default
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws_access_key_id: AWS_ACCESS_KEY_ID
+          aws_secret_access_key: AWS_SECRET_ACCESS_KEY
+          region: AWS_DEFAULT_REGION
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-network-stack"
+          template-file-path: "cloudformation/network.yml"
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-security-stack"
+          template-file-path: "cloudformation/security.yml"
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-app1-stack"
+          template-file-path: "cloudformation/application1.yml"
+          capabilities: CAPABILITY_NAMED_IAM
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-app2-stack"
+          template-file-path: "cloudformation/application2.yml"
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-app3-stack"
+          template-file-path: "cloudformation/application3.yml"
+          capabilities: CAPABILITY_NAMED_IAM
+      - aws-cloudformation/deploy:
+          stack-name: "lecture13-app4-stack"
+          template-file-path: "cloudformation/application4.yml"
+
+      - run:
+          name: 環境変数の設定
+          command: |
+            aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app2-stack --query 'Stacks[].Outputs[?OutputKey==`RDSInstanceEndpoint`].OutputValue' --output text > /tmp/AWS_DB_HOST.txt
+            password=$(aws secretsmanager get-secret-value --secret-id MyRDSSecret --region ap-northeast-1 --query 'SecretString' --output text | jq -r .password)
+            echo $password > /tmp/AWS_DB_PW.txt
+            aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app3-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_ALB_HOST.txt
+            aws cloudformation describe-stacks --region ap-northeast-1 --stack-name lecture13-app4-stack --query 'Stacks[].Outputs[0].OutputValue' --output text > /tmp/AWS_S3_NAME.txt
+            
+      - persist_to_workspace:
+          root: /tmp
+          paths: AWS*
+            
+  execute-ansible:
+    executor: ansible-playbook/default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: set-env-vars
+          command: |
+            echo "export AWS_DB_HOST=$(cat /tmp/AWS_DB_HOST.txt)" >> $BASH_ENV
+            echo "export AWS_DB_PW=$(cat /tmp/AWS_DB_PW.txt)" >> $BASH_ENV
+            echo "export AWS_ALB_HOST=$(cat /tmp/AWS_ALB_HOST.txt)" >> $BASH_ENV
+            echo "export AWS_S3_NAME=$(cat /tmp/AWS_S3_NAME.txt)" >> $BASH_ENV
+            
+            
+      - add_ssh_keys:
+          fingerprints:
+            - SHA256:1L4djQiuMIWSJwXsMSIW9HJqz7IjPsQpARLqhU6H+o0
+      - ansible-playbook/install:
+          version: 2.10.7
+      - run:
+          name: Install Ansible
+          command: pip install ansible
+      - run:
+          name: Create required directories
+          command: |
+            mkdir -p ~/.ansible/collections/ansible_collections
+      - run:
+          name: Verify directories
+          command: |
+            ls -la ~/.ansible/collections/
+      - run:
+          name: Install Ansible Galaxy Collections
+          command: ansible-galaxy collection install amazon.aws
+      - run:
+          name: Install Ansible Galaxy Collections
+          command: ansible-galaxy collection install community.mysql
+      - ansible-playbook/playbook:
+          playbook: ansible/playbook.yml
+          playbook-options: -u ec2-user -i ansible/inventory --private-key ~/.ssh/authorized_key
+          
+  execute-serverspec:
+    docker:
+      - image: cimg/ruby:3.2.3  
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - add_ssh_keys:
+          fingerprints:
+            - SHA256:1L4djQiuMIWSJwXsMSIW9HJqz7IjPsQpARLqhU6H+o0
+      - run: ruby --version
+      - run:
+          name: serverspec setup 
+          command: |
+            cd serverspec
+            bundle install
+            gem install ed25519 -v '~> 1.2'
+            gem install bcrypt_pbkdf -v '~> 1.0'
+      - run:
+          name: create ~/.ssh/config target config
+          command: |
+            set -x
+            AWS_DB_HOST=$(cat /tmp/AWS_DB_HOST.txt)
+            AWS_DB_PW=$(cat /tmp/AWS_DB_PW.txt)
+            AWS_ALB_HOST=$(cat /tmp/AWS_ALB_HOST.txt)
+            AWS_S3_NAME=$(cat /tmp/AWS_S3_NAME.txt)
+            echo "export AWS_DB_HOST=${AWS_DB_HOST}" >> $BASH_ENV
+            echo "export AWS_DB_PW=${AWS_DB_PW}" >> $BASH_ENV
+            echo "export AWS_ALB_HOST=${AWS_ALB_HOST}" >> $BASH_ENV
+            echo "export AWS_S3_NAME=${AWS_S3_NAME}" >> $BASH_ENV
+            source $BASH_ENV
+            
+      - run:
+          name: create ~/.ssh/config target config
+          command: |
+            mkdir -p ~/.ssh
+            echo "Host target" >> ~/.ssh/config
+            echo "HostName 18.181.106.211" >> ~/.ssh/config
+            echo "User ec2-user" >> ~/.ssh/config
+            
+      - run:  
+          name: execution for serverspec test
+          command: |
+            cd serverspec/spec
+            rake spec
+          
+# Orchestrate jobs using workflows
+# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
+workflows:
+  lecture13-workflow:
+    jobs:
+      - execute-cloudformation
+      - execute-ansible:
+          requires:
+            - execute-cloudformation
+      - execute-serverspec:
+          requires:
+            - execute-ansible
+  
+# This is the name of the workflow, feel free to change it to better match your workflow.
+    # Inside the workflow, you define the jobs you want to run.

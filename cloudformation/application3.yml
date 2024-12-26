@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Application_Layer Template
+
+Parameters:
+  NameBase: 
+    Description: for application
+    Type: String
+    Default: lecture13
+  IpAddressType:
+    Type: String
+    Default: "ipv4"
+    
+Resources:
+ # TargetGroup
+  ALBTargetGroup: 
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${NameBase}-tg
+      Tags:
+        - Key: Name
+          Value: !Sub ${NameBase}-tg
+      Port: 80
+      Protocol: HTTP
+      Matcher:
+        HttpCode: '200'
+      VpcId: !ImportValue lecture13-VPCid
+      TargetType: instance
+      Targets:
+        - Id: !ImportValue lecture13-ec2id
+ # ALB
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: "application"
+      Scheme: "internet-facing"
+      Name: !Sub ${NameBase}-alb
+      IpAddressType: !Ref IpAddressType
+      Subnets:
+        - !ImportValue lecture13-PublicSubnet1id
+        - !ImportValue lecture13-PublicSubnet2id
+      SecurityGroups:
+        - !ImportValue lecture13-SecurityGroupALB
+      Tags:
+        - Key: Name
+          Value: !Sub ${NameBase}-alb
+ #listener
+  ListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref ALBTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+      
+  StoreDNSNameParameter:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/loadbalancer/dnsname"
+      Type: "String"
+      Value: !GetAtt
+        - ALB
+        - DNSName
+
+        
+Outputs:
+  ALBDNS:
+    Description: "The DNS name of the ALB"
+    Value: !GetAtt ALB.DNSName
+    Export:
+      Name: "LoadBalancerDNSName"

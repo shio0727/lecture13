@@ -1,0 +1,45 @@
+- name: yum update
+  become: yes
+  yum: 
+    name: "*"
+    state: latest
+
+- name: install tools
+  become: yes
+  yum:
+    name:
+      - gcc-c++
+      - openssl-devel
+      - libyaml-devel
+      - readline
+      - readline-devel
+      - zlib
+      - zlib-devel
+      - libffi-devel
+      - libxml2 
+      - libxslt 
+      - libxml2-devel 
+      - libxslt-devel 
+      - sqlite-devel
+      - ImageMagick
+      - ImageMagick-devel
+    state: present
+    
+# Gitのインストール
+- name: Install git
+  become: true
+  yum:
+    name: git
+    state: present  # 入ってる状態にする
+    lock_timeout: 60
+    
+- name: Check if the application directory exists
+  stat:
+    path: "{{ app_dir }}"
+  register: sample_app
+
+- name: Clone the repository
+  git:
+    repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
+    dest: "{{ app_dir }}"
+  when: not sample_app.stat.exists
